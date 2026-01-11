@@ -1,0 +1,126 @@
+{% extends "layout.html" %}
+
+{% block title %}RDBMS Demo - MyRDBMS{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">MyRDBMS Feature Demonstration</h5>
+            </div>
+            <div class="card-body">
+                <p>This page demonstrates the key features of my custom-built relational database management system.</p>
+                
+                <div class="alert alert-info">
+                    <h6><i class="bi bi-lightbulb"></i> What makes this special?</h6>
+                    <p class="mb-0">
+                        Unlike most web apps that use MySQL, PostgreSQL, or SQLite, this application is powered by 
+                        <strong>my own MyRDBMS implementation</strong> built from scratch in Python. Every SQL query 
+                        you see here is executed by my custom database engine.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        {% for demo in demo_queries %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">{{ demo.title }}</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted">SQL Query:</small>
+                    <div class="bg-light p-3 rounded font-monospace">
+                        {{ demo.sql }}
+                    </div>
+                </div>
+                
+                {% if demo.result is string %}
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle"></i> {{ demo.result }}
+                </div>
+                {% elif demo.result is iterable and demo.result|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                {% for key in demo.result[0].keys() %}
+                                <th>{{ key }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in demo.result %}
+                            <tr>
+                                {% for value in row.values() %}
+                                <td>{{ value }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-light">
+                    <i class="bi bi-info-circle"></i> Query executed successfully
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Architecture Overview</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>RDBMS Components:</h6>
+                        <ul>
+                            <li><strong>Storage Engine</strong> - File-based storage with indexing</li>
+                            <li><strong>SQL Parser</strong> - Parses SQL-like queries</li>
+                            <li><strong>Query Executor</strong> - Executes parsed queries</li>
+                            <li><strong>Type System</strong> - Data type validation</li>
+                            <li><strong>REPL</strong> - Interactive command-line interface</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Web App Components:</h6>
+                        <ul>
+                            <li><strong>Flask Framework</strong> - Web server and routing</li>
+                            <li><strong>Templates</strong> - HTML with Bootstrap</li>
+                            <li><strong>Database Module</strong> - Integration with my MyRDBMS</li>
+                            <li><strong>CRUD Operations</strong> - Create, Read, Update, Delete</li>
+                            <li><strong>API Endpoints</strong> - JSON API for queries</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="alert alert-success mt-3">
+                    <h6><i class="bi bi-check-circle"></i> Requirements Met:</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="mb-0">
+                                <li>✅ Declaring tables with data types</li>
+                                <li>✅ CRUD operations</li>
+                                <li>✅ Primary and unique keys</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="mb-0">
+                                <li>✅ Basic indexing</li>
+                                <li>✅ JOIN operations</li>
+                                <li>✅ SQL-like interface</li>
+                                <li>✅ Interactive REPL mode</li>
+                                <li>✅ Trivial web app with CRUD</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

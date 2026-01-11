@@ -1,0 +1,107 @@
+{% extends "layout.html" %}
+
+{% block title %}SQL Query - MyRDBMS{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">SQL Query Interface</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">
+                    Execute SQL queries directly against MyRDBMS. 
+                    This demonstrates the SQL-like interface of the database engine.
+                </p>
+                
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="sql" class="form-label">SQL Query:</label>
+                        <textarea class="form-control font-monospace" id="sql" name="sql" 
+                                  rows="6" placeholder="SELECT * FROM students;">{{ sql }}</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-play-circle"></i> Execute Query
+                    </button>
+                </form>
+                
+                <hr>
+                
+                <h6>Example Queries:</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <small class="text-muted">Basic SELECT</small>
+                                <code class="d-block mt-1">SELECT * FROM students LIMIT 3;</code>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <small class="text-muted">JOIN Example</small>
+                                <code class="d-block mt-1">
+                                    SELECT s.first_name, c.course_name, e.grade<br>
+                                    FROM enrollments e<br>
+                                    INNER JOIN students s ON e.student_id = s.student_id<br>
+                                    INNER JOIN courses c ON e.course_id = c.course_id;
+                                </code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if error %}
+        <div class="card border-danger mt-4">
+            <div class="card-header bg-danger text-white">
+                <h6 class="mb-0">Error</h6>
+            </div>
+            <div class="card-body">
+                <code class="text-danger">{{ error }}</code>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if result is not none %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">Query Result</h6>
+            </div>
+            <div class="card-body">
+                {% if result is string %}
+                <p>{{ result }}</p>
+                {% elif result is iterable and result|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                {% for key in result[0].keys() %}
+                                <th>{{ key }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in result %}
+                            <tr>
+                                {% for value in row.values() %}
+                                <td>{{ value }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted">{{ result|length }} row(s) returned</p>
+                {% else %}
+                <p class="text-muted">Query executed successfully (no rows returned)</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

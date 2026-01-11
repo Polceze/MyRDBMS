@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+
+{% block title %}Add Student - MyRDBMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Add New Student</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="student_id" class="form-label">Student ID *</label>
+                            <input type="number" class="form-control" id="student_id" name="student_id" required>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="enrollment_year" class="form-label">Enrollment Year *</label>
+                            <input type="number" class="form-control" id="enrollment_year" name="enrollment_year" 
+                                   min="2000" max="2030" value="2024" required>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="first_name" class="form-label">First Name *</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" required>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="last_name" class="form-label">Last Name *</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" required>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="date_of_birth" class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" id="date_of_birth" name="date_of_birth">
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Add Student</button>
+                        <a href="{{ url_for('main.list_students') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

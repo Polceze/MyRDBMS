@@ -1,0 +1,78 @@
+{% extends "layout.html" %}
+
+{% block title %}Enrollments - MyRDBMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Enrollments</h1>
+    <small class="text-muted">Demonstrating JOIN operations</small>
+</div>
+
+<!-- Enrollments Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Student Course Enrollments</h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">
+            This table demonstrates an <strong>INNER JOIN</strong> across three tables: 
+            students, courses, and enrollments.
+        </p>
+        
+        {% if enrollments %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Enrollment ID</th>
+                        <th>Student</th>
+                        <th>Course</th>
+                        <th>Enrollment Date</th>
+                        <th>Grade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for enroll in enrollments %}
+                    <tr>
+                        <td><code>{{ enroll.enrollment_id }}</code></td>
+                        <td>{{ enroll.first_name }} {{ enroll.last_name }} (ID: {{ enroll.student_id }})</td>
+                        <td>{{ enroll.course_name }} ({{ enroll.course_code }})</td>
+                        <td>{{ enroll.enrollment_date }}</td>
+                        <td>
+                            {% if enroll.grade %}
+                            <span class="badge bg-primary">{{ enroll.grade }}</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-clipboard-check display-1 text-muted"></i>
+            <h4 class="mt-3">No enrollments found</h4>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h6 class="mb-0">SQL Query Used</h6>
+    </div>
+    <div class="card-body">
+        <code>
+            SELECT enrollments.enrollment_id, enrollments.enrollment_date, enrollments.grade,<br>
+                   students.student_id, students.first_name, students.last_name,<br>
+                   courses.course_id, courses.course_code, courses.course_name<br>
+            FROM enrollments<br>
+            INNER JOIN students ON enrollments.student_id = students.student_id<br>
+            INNER JOIN courses ON enrollments.course_id = courses.course_id<br>
+            ORDER BY enrollments.enrollment_date DESC
+        </code>
+    </div>
+</div>
+{% endblock %}

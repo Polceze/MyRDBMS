@@ -1,0 +1,149 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard - MyRDBMS{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>Dashboard</h1>
+        <p class="lead">Web interface for my custom-built RDBMS</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Stats Cards -->
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h1 class="display-4">{{ student_count }}</h1>
+                <h5 class="card-title">Students</h5>
+                <a href="{{ url_for('main.list_students') }}" class="btn btn-outline-primary">View All</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h1 class="display-4">{{ course_count }}</h1>
+                <h5 class="card-title">Courses</h5>
+                <a href="{{ url_for('main.list_courses') }}" class="btn btn-outline-primary">View All</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h1 class="display-4">{{ enrollment_count }}</h1>
+                <h5 class="card-title">Enrollments</h5>
+                <a href="{{ url_for('main.list_enrollments') }}" class="btn btn-outline-primary">View All</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Enrollments</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_enrollments %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Course</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for enroll in recent_enrollments %}
+                            <tr>
+                                <td>{{ enroll.first_name }} {{ enroll.last_name }}</td>
+                                <td>{{ enroll.course_name }}</td>
+                                <td>{{ enroll.enrollment_date }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No enrollments found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Links</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('main.sql_query') }}" class="btn btn-outline-success">
+                        <i class="bi bi-terminal"></i> SQL Query Interface
+                    </a>
+                    <a href="{{ url_for('main.demo') }}" class="btn btn-outline-info">
+                        <i class="bi bi-code-slash"></i> RDBMS Features Demo
+                    </a>
+                    <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#aboutModal">
+                        <i class="bi bi-info-circle"></i> About This Project
+                    </button>
+                </div>
+                
+                <hr>
+                
+                <h6>Try MyRDBMS:</h6>
+                <div class="alert alert-light">
+                    <small>
+                        <strong>Command-line REPL:</strong><br>
+                        <code>$ python main.py</code><br><br>
+                        <strong>Example SQL:</strong><br>
+                        <code>CREATE TABLE test (id INT, name VARCHAR(50));</code><br>
+                        <code>INSERT INTO test VALUES (1, 'Example');</code><br>
+                        <code>SELECT * FROM test;</code>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Database Statistics</h5>
+            </div>
+            <div class="card-body">
+                <p>This application demonstrates a fully-functional web interface built on top of my custom RDBMS.</p>
+                
+                <h6>Key Features Implemented:</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="feature-list">
+                            <li>Full CRUD operations through web forms</li>
+                            <li>Real-time SQL query execution</li>
+                            <li>JOIN operations across tables</li>
+                            <li>Search and filtering</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="feature-list">
+                            <li>Data validation and constraints</li>
+                            <li>Responsive Bootstrap interface</li>
+                            <li>JSON API for programmatic access</li>
+                            <li>Sample data generation</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

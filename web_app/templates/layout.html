@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}MyRDBMS Web Interface{% endblock %}</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+        <style>
+            body {
+                padding-top: 20px;
+                background-color: #f8f9fa;
+            }
+            .navbar-brand {
+                font-weight: bold;
+                color: #0d6efd !important;
+            }
+            .card {
+                margin-bottom: 20px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .card-header {
+                background-color: #f8f9fa;
+                font-weight: bold;
+            }
+            .feature-list {
+                list-style-type: none;
+                padding-left: 0;
+            }
+            .feature-list li {
+                padding: 5px 0;
+            }
+            .feature-list li:before {
+                content: "✓ ";
+                color: #198754;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-light bg-white rounded shadow-sm mb-4">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="{{ url_for('main.index') }}">
+                        <i class="bi bi-database"></i> MyRDBMS
+                    </a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav me-auto">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('main.index') }}">
+                                    <i class="bi bi-house"></i> Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('main.list_students') }}">
+                                    <i class="bi bi-people"></i> Students
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('main.list_courses') }}">
+                                    <i class="bi bi-book"></i> Courses
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('main.list_enrollments') }}">
+                                    <i class="bi bi-clipboard-check"></i> Enrollments
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('main.sql_query') }}">
+                                    <i class="bi bi-terminal"></i> SQL Query
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('main.demo') }}">
+                                    <i class="bi bi-code-slash"></i> Demo
+                                </a>
+                            </li>
+                        </ul>
+                        <span class="navbar-text">
+                            Powered by <strong> MyRDBMS</strong>
+                        </span>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Main Content -->
+            <main>
+                {% block content %}{% endblock %}
+            </main>
+
+            <footer class="mt-5 pt-3 border-top text-center text-muted">
+                <p>
+                    MyRDBMS Web Interface &copy; 2026 | 
+                    <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#aboutModal">
+                        About This Project
+                    </a>
+                </p>
+            </footer>
+        </div>
+
+        <!-- About Modal -->
+        <div class="modal fade" id="aboutModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">About MyRDBMS</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>This web application is powered by a <strong>custom-built relational database management system</strong> implemented in Python.</p>
+                        
+                        <h6>Features demonstrated:</h6>
+                        <ul class="feature-list">
+                            <li>SQL-like query language</li>
+                            <li>CREATE TABLE with data types</li>
+                            <li>CRUD operations (INSERT, SELECT, UPDATE, DELETE)</li>
+                            <li>Primary and unique keys</li>
+                            <li>Basic indexing</li>
+                            <li>INNER JOIN operations</li>
+                            <li>Interactive REPL (command-line)</li>
+                            <li>Web interface (this app)</li>
+                        </ul>
+                        
+                        <p>The entire database engine is built from scratch, including:</p>
+                        <ul>
+                            <li>Storage engine with file persistence</li>
+                            <li>SQL parser</li>
+                            <li>Query executor</li>
+                            <li>Index manager</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+        {% block scripts %}{% endblock %}
+    </body>
+</html>
