@@ -61,14 +61,21 @@ class StorageEngine:
             
             # Validate data type
             if col_type not in [DataType.INT, DataType.VARCHAR, DataType.TEXT, 
-                              DataType.DATE, DataType.FLOAT, DataType.BOOL]:
+                            DataType.DATE, DataType.FLOAT, DataType.BOOL]:
                 raise ValueError(f"Unsupported data type: {col_type}")
+            
+            # Handle nullable constraint
+            nullable = True  # Default is nullable
+            if len(col_def) >= 3 and col_def[2] is not None:
+                # If there's a constraint, check if it's NOT NULL
+                constraint = col_def[2].upper()
+                nullable = constraint != 'NOT NULL'
             
             validated_columns.append({
                 'name': col_name,
                 'type': col_type,
                 'max_length': max_length,
-                'nullable': len(col_def) < 3 or col_def[2].upper() != 'NOT NULL'
+                'nullable': nullable  # Use the calculated value
             })
         
         # Store schema

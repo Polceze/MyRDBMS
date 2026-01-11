@@ -6,26 +6,28 @@ class SQLParser:
     @staticmethod
     def parse(sql):
         """Parse a SQL command and return its components"""
-        sql = sql.strip().upper()
+        # Removed uppercase conversion from here
+        sql = sql.strip()
         
-        if sql.startswith('CREATE TABLE'):
+        sql_upper = sql.upper()
+        if sql_upper.startswith('CREATE TABLE'):
             return SQLParser._parse_create_table(sql)
-        elif sql.startswith('INSERT INTO'):
+        elif sql_upper.startswith('INSERT INTO'):
             return SQLParser._parse_insert(sql)
-        elif sql.startswith('SELECT'):
+        elif sql_upper.startswith('SELECT'):
             return SQLParser._parse_select(sql)
-        elif sql.startswith('UPDATE'):
+        elif sql_upper.startswith('UPDATE'):
             return SQLParser._parse_update(sql)
-        elif sql.startswith('DELETE FROM'):
+        elif sql_upper.startswith('DELETE FROM'):
             return SQLParser._parse_delete(sql)
-        elif sql.startswith('CREATE INDEX'):
+        elif sql_upper.startswith('CREATE INDEX'):
             return SQLParser._parse_create_index(sql)
         else:
             raise ValueError(f"Unsupported SQL command: {sql}")
     
     @staticmethod
     def _parse_create_table(sql):
-        # parse CREATE TABLE table_name (col1 TYPE, col2 TYPE, ..., PRIMARY KEY(col), UNIQUE(col))
+        # CREATE TABLE table_name (col1 TYPE, col2 TYPE, PRIMARY KEY(col))
         pattern = r'CREATE TABLE (\w+) \((.+)\)'
         match = re.match(pattern, sql, re.IGNORECASE | re.DOTALL)
         if not match:
@@ -34,68 +36,108 @@ class SQLParser:
         table_name = match.group(1)
         columns_str = match.group(2).strip()
         
-        # Parse columns and constraints
+        print(f"[DEBUG] Parsing CREATE TABLE: {table_name}")
+        print(f"[DEBUG] Columns string: {columns_str}")
+        
         columns = []
         primary_key = None
         unique_keys = []
         
-        # Split by comma, but handle nested parentheses
+        # Token splitting that handles constraints properly
         tokens = []
         current = ""
-        paren_depth = 0
+        depth = 0
         
+        # First pass: split by commas, respecting parentheses
         for char in columns_str:
             if char == '(':
-                paren_depth += 1
+                depth += 1
                 current += char
             elif char == ')':
-                paren_depth -= 1
+                depth -= 1
                 current += char
-            elif char == ',' and paren_depth == 0:
+            elif char == ',' and depth == 0:
                 tokens.append(current.strip())
                 current = ""
             else:
                 current += char
         
-        if current:
+        if current.strip():
             tokens.append(current.strip())
         
+        # Second pass: separate column definitions from constraints
+        column_tokens = []
+        constraint_tokens = []
+        
         for token in tokens:
+            token_upper = token.upper()
+            if token_upper.startswith('PRIMARY KEY') or token_upper.startswith('UNIQUE'):
+                constraint_tokens.append(token)
+            else:
+                column_tokens.append(token)
+        
+        print(f"[DEBUG] Column tokens: {column_tokens}")
+        print(f"[DEBUG] Constraint tokens: {constraint_tokens}")
+        
+        # Process column definitions
+        for token in column_tokens:
+            # Split into parts
+            parts = token.split()
+            if len(parts) < 2:
+                raise ValueError(f"Invalid column definition: {token}")
+            
+            col_name = parts[0]
+            col_type = parts[1]
+            
+            # Check for PRIMARY KEY in the same token (e.g., "id INT PRIMARY KEY")
+            # We need to handle this case
+            if 'PRIMARY KEY' in token.upper():
+                # Extract column type before PRIMARY KEY
+                for i, part in enumerate(parts):
+                    if part.upper() == 'PRIMARY':
+                        # Everything before "PRIMARY" is column definition
+                        col_type = parts[i-1] if i > 1 else parts[1]
+                        # Set as primary key
+                        if primary_key is None:
+                            primary_key = col_name
+                        else:
+                            raise ValueError(f"Multiple primary keys defined: {primary_key} and {col_name}")
+                        break
+            
+            # Handle NOT NULL
+            nullable = True
+            if 'NOT NULL' in token.upper():
+                nullable = False
+            
+            # Handle VARCHAR length
+            if '(' in col_type:
+                # Keep as is (e.g., VARCHAR(50))
+                pass
+            
+            columns.append((col_name, col_type, 'NOT NULL' if not nullable else None))
+        
+        # Process constraint tokens
+        for token in constraint_tokens:
             token_upper = token.upper()
             
             if token_upper.startswith('PRIMARY KEY'):
                 # PRIMARY KEY(col_name)
                 pk_match = re.search(r'PRIMARY KEY\((\w+)\)', token, re.IGNORECASE)
                 if pk_match:
-                    primary_key = pk_match.group(1)
-                continue
+                    if primary_key is None:
+                        primary_key = pk_match.group(1)
+                    else:
+                        raise ValueError(f"Multiple primary keys defined: {primary_key} and {pk_match.group(1)}")
             
-            if token_upper.startswith('UNIQUE'):
-                # UNIQUE(col_name)
-                unique_match = re.search(r'UNIQUE\((\w+)\)', token, re.IGNORECASE)
+            elif token_upper.startswith('UNIQUE'):
+                # UNIQUE(col_name) or UNIQUE KEY(col_name)
+                unique_match = re.search(r'UNIQUE(?: KEY)?\((\w+)\)', token, re.IGNORECASE)
                 if unique_match:
                     unique_keys.append(unique_match.group(1))
-                continue
-            
-            # Regular column: name TYPE [NOT NULL]
-            col_parts = token.split()
-            if len(col_parts) < 2:
-                raise ValueError(f"Invalid column definition: {token}")
-            
-            col_name = col_parts[0]
-            col_type = col_parts[1]
-            
-            # Handle VARCHAR(255) type
-            if '(' in col_type:
-                base_type = col_type.split('(')[0]
-                if base_type.upper() == 'VARCHAR':
-                    col_type = col_type  # Keep VARCHAR(255) as is
-            
-            nullable = True
-            if len(col_parts) > 2 and ' '.join(col_parts[2:]).upper() == 'NOT NULL':
-                nullable = False
-            
-            columns.append((col_name, col_type, 'NOT NULL' if not nullable else None))
+        
+        print(f"[DEBUG] Parsed columns: {columns}")
+        print(f"[DEBUG] Primary key: {primary_key}")
+        print(f"[DEBUG] Unique keys: {unique_keys}")
         
         return {
             'type': 'CREATE_TABLE',
@@ -133,13 +175,17 @@ class SQLParser:
             if len(columns) != len(values):
                 raise ValueError(f"Column count ({len(columns)}) doesn't match value count ({len(values)})")
             values_dict = dict(zip(columns, values))
+            is_positional = False
         else:
-            values_dict = {f'col{i}': val for i, val in enumerate(values)}
+            # For positional INSERT (no column names), store values as a list
+            values_dict = {'__positional_values': values}
+            is_positional = True
         
         return {
             'type': 'INSERT',
             'table_name': table_name,
-            'values': values_dict
+            'values': values_dict,
+            'is_positional': is_positional
         }
     
     @staticmethod
