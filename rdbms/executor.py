@@ -1,4 +1,4 @@
-"""Query Executor for our RDBMS"""
+"""Query Execution Engine"""
 
 from .storage import StorageEngine
 
