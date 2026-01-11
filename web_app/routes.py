@@ -11,25 +11,48 @@ def index():
     db = get_db()
     
     # Get counts for dashboard
-    students = db.execute_raw('SELECT COUNT(*) as count FROM students')
-    courses = db.execute_raw('SELECT COUNT(*) as count FROM courses')
-    enrollments = db.execute_raw('SELECT COUNT(*) as count FROM enrollments')
+    try:
+        students_result = db.execute_raw('SELECT COUNT(*) as student_count FROM students')
+        courses_result = db.execute_raw('SELECT COUNT(*) as course_count FROM courses')
+        enrollments_result = db.execute_raw('SELECT COUNT(*) as enrollment_count FROM enrollments')
+        
+        # Extract counts
+        student_count = students_result[0]['student_count'] if students_result and len(students_result) > 0 else 0
+        course_count = courses_result[0]['course_count'] if courses_result and len(courses_result) > 0 else 0
+        enrollment_count = enrollments_result[0]['enrollment_count'] if enrollments_result and len(enrollments_result) > 0 else 0
+        
+        print(f"Dashboard counts: students={student_count}, courses={course_count}, enrollments={enrollment_count}")
+        
+    except Exception as e:
+        print(f"Error getting dashboard counts: {e}")
+        student_count = course_count = enrollment_count = 0
     
-    # Recent enrollments with JOIN
-    recent_enrollments = db.execute_raw('''
-        SELECT students.first_name, students.last_name, 
-               courses.course_name, enrollments.enrollment_date
-        FROM enrollments
-        INNER JOIN students ON enrollments.student_id = students.student_id
-        INNER JOIN courses ON enrollments.course_id = courses.course_id
-        ORDER BY enrollments.enrollment_date DESC
-        LIMIT 5
-    ''')
+    # Get recent enrollments
+    recent_enrollments = []
+    try:
+        recent_enrollments = db.execute_raw('''
+            SELECT students.first_name, students.last_name, 
+                   courses.course_name, enrollments.enrollment_date,
+                   enrollments.grade, courses.course_code
+            FROM enrollments
+            INNER JOIN students ON enrollments.student_id = students.student_id
+            INNER JOIN courses ON enrollments.course_id = courses.course_id
+            ORDER BY enrollments.enrollment_date DESC
+            LIMIT 5
+        ''')
+        
+        print(f"Dashboard: Found {len(recent_enrollments)} recent enrollments")
+        if recent_enrollments and len(recent_enrollments) > 0:
+            print(f"First enrollment keys: {list(recent_enrollments[0].keys())}")
+            print(f"First enrollment: {recent_enrollments[0]}")
+        
+    except Exception as e:
+        print(f"Error getting recent enrollments: {e}")
     
     return render_template('index.html',
-                         student_count=students[0]['count'] if students else 0,
-                         course_count=courses[0]['count'] if courses else 0,
-                         enrollment_count=enrollments[0]['count'] if enrollments else 0,
+                         student_count=student_count,
+                         course_count=course_count,
+                         enrollment_count=enrollment_count,
                          recent_enrollments=recent_enrollments)
 
 @bp.route('/students')
@@ -152,15 +175,22 @@ def list_enrollments():
     """List all enrollments with JOIN"""
     db = get_db()
     
-    enrollments = db.execute_raw('''
-        SELECT enrollments.enrollment_id, enrollments.enrollment_date, enrollments.grade,
-               students.student_id, students.first_name, students.last_name,
-               courses.course_id, courses.course_code, courses.course_name
-        FROM enrollments
-        INNER JOIN students ON enrollments.student_id = students.student_id
-        INNER JOIN courses ON enrollments.course_id = courses.course_id
-        ORDER BY enrollments.enrollment_date DESC
-    ''')
+    try:
+        enrollments = db.execute_raw('''
+            SELECT enrollment_id, enrollment_date, grade,
+                   student_id, first_name, last_name,
+                   course_id, course_code, course_name
+            FROM enrollments
+            INNER JOIN students ON enrollments.student_id = students.student_id
+            INNER JOIN courses ON enrollments.course_id = courses.course_id
+            ORDER BY enrollment_date DESC
+        ''')
+        print(f"Enrollments page: Found {len(enrollments)} enrollments")
+        if enrollments and len(enrollments) > 0:
+            print(f"First enrollment keys: {list(enrollments[0].keys())}")
+    except Exception as e:
+        print(f"Error loading enrollments: {e}")
+        enrollments = []
     
     return render_template('enrollments/list.html', enrollments=enrollments)
 

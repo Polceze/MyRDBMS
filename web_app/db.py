@@ -86,9 +86,9 @@ def init_database():
     students = [
         (1, 'John', 'Doe', 'john.doe@example.com', '2000-05-15', 2022),
         (2, 'Jane', 'Smith', 'jane.smith@example.com', '2001-08-22', 2022),
-        (3, 'Bob', 'Johnson', 'bob.johnson@example.com', '1999-12-10', 2021),
-        (4, 'Alice', 'Williams', 'alice.williams@example.com', '2000-03-30', 2022),
-        (5, 'Charlie', 'Brown', 'charlie.brown@example.com', '2002-01-18', 2023)
+        (3, 'Paul', 'Ochieng', 'paul.ochieng@example.com', '1999-12-10', 2021),
+        (4, 'Alice', 'Wanjiku', 'alice.wanjiku@example.com', '2000-03-30', 2022),
+        (5, 'William', 'Ruto', 'william.ruto@example.com', '2002-01-18', 2023)
     ]
     
     for student in students:
@@ -100,11 +100,11 @@ def init_database():
     
     # Courses
     courses = [
-        (101, 'CS101', 'Introduction to Computer Science', 'Dr. Smith', 3),
-        (102, 'MATH201', 'Calculus I', 'Prof. Johnson', 4),
-        (103, 'ENG101', 'English Composition', 'Dr. Davis', 3),
+        (101, 'CS101', 'Introduction to Computer Science', 'Dr. Timon', 3),
+        (102, 'MATH201', 'Calculus I', 'Prof. Betty', 4),
+        (103, 'ENG101', 'English Composition', 'Dr. Amollo', 3),
         (104, 'PHYS101', 'Physics Fundamentals', 'Prof. Wilson', 4),
-        (105, 'CS201', 'Data Structures', 'Dr. Miller', 3)
+        (105, 'CS201', 'Data Structures', 'Dr. Joyce', 3)
     ]
     
     for course in courses:

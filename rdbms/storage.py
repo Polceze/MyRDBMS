@@ -159,7 +159,7 @@ class StorageEngine:
         self.save()
         return row_id
     
-    def select(self, table_name, columns='*', where=None, join=None):
+    def select(self, table_name, columns='*', where=None, join=None, order_by=None, limit=None):
         """Select rows from table with optional WHERE and JOIN"""
         if table_name not in self.schema:
             raise ValueError(f"Table '{table_name}' doesn't exist")
@@ -174,6 +174,13 @@ class StorageEngine:
         if join:
             rows = self._apply_join(rows, join)
         
+        # Handle aggregate functions
+        columns_upper = columns.upper()
+        if ('COUNT(' in columns_upper or 'SUM(' in columns_upper or 
+            'AVG(' in columns_upper or 'MIN(' in columns_upper or 
+            'MAX(' in columns_upper):
+            return self._handle_aggregate(rows, columns, table_name)
+        
         # Select specific columns
         if columns != '*':
             selected_rows = []
@@ -181,12 +188,185 @@ class StorageEngine:
                 selected_row = {}
                 for col in columns.split(','):
                     col = col.strip()
+                    # Strip table prefix if present (e.g., "enrollments.student_id" → "student_id")
+                    if '.' in col:
+                        col = col.split('.')[-1]  # Take last part after dot
+                    
                     if col in row:
                         selected_row[col] = row[col]
                 selected_rows.append(selected_row)
             rows = selected_rows
         
+        # Apply ORDER BY if specified
+        if order_by:
+            rows = self._apply_order_by(rows, order_by)
+        
+        # Apply LIMIT if specified
+        if limit:
+            try:
+                limit_int = int(limit)
+                rows = rows[:limit_int]
+            except:
+                pass
+        
         return rows
+    
+    def _handle_aggregate(self, rows, columns, table_name):
+        """Handle aggregate functions like COUNT(*), AVG(column), etc."""
+        import re
+        
+        # Helper function to extract column name and alias
+        def parse_aggregate(pattern, sql):
+            match = re.match(pattern, sql, re.IGNORECASE)
+            if match:
+                col_name = match.group(1).strip()
+                # Check for alias
+                alias_match = re.search(r'AS\s+(\w+)', sql, re.IGNORECASE)
+                alias = alias_match.group(1) if alias_match else None
+                return col_name, alias
+            return None, None
+        
+        # COUNT(*)
+        count_star_match = re.match(r'COUNT\(\s*\*\s*\)', columns, re.IGNORECASE)
+        if count_star_match:
+            count = len(rows)
+            alias_match = re.search(r'AS\s+(\w+)', columns, re.IGNORECASE)
+            if alias_match:
+                return [{alias_match.group(1): count}]
+            return [{'COUNT(*)': count}]
+        
+        # COUNT(column)
+        count_match = re.match(r'COUNT\(\s*(\w+)\s*\)', columns, re.IGNORECASE)
+        if count_match:
+            col_name = count_match.group(1)
+            count = sum(1 for row in rows if col_name in row and row[col_name] is not None)
+            alias_match = re.search(r'AS\s+(\w+)', columns, re.IGNORECASE)
+            if alias_match:
+                return [{alias_match.group(1): count}]
+            return [{f'COUNT({col_name})': count}]
+        
+        # SUM(column)
+        sum_match = re.match(r'SUM\(\s*(\w+)\s*\)', columns, re.IGNORECASE)
+        if sum_match:
+            col_name = sum_match.group(1)
+            values = []
+            for row in rows:
+                if col_name in row and row[col_name] is not None:
+                    try:
+                        values.append(float(row[col_name]))
+                    except (ValueError, TypeError):
+                        pass
+            total = sum(values) if values else 0
+            alias_match = re.search(r'AS\s+(\w+)', columns, re.IGNORECASE)
+            if alias_match:
+                return [{alias_match.group(1): total}]
+            return [{f'SUM({col_name})': total}]
+        
+        # AVG(column)
+        avg_match = re.match(r'AVG\(\s*(\w+)\s*\)', columns, re.IGNORECASE)
+        if avg_match:
+            col_name = avg_match.group(1)
+            values = []
+            for row in rows:
+                if col_name in row and row[col_name] is not None:
+                    try:
+                        values.append(float(row[col_name]))
+                    except (ValueError, TypeError):
+                        pass
+            if values:
+                avg_val = sum(values) / len(values)
+            else:
+                avg_val = 0
+            alias_match = re.search(r'AS\s+(\w+)', columns, re.IGNORECASE)
+            if alias_match:
+                return [{alias_match.group(1): avg_val}]
+            return [{f'AVG({col_name})': avg_val}]
+        
+        # MIN(column)
+        min_match = re.match(r'MIN\(\s*(\w+)\s*\)', columns, re.IGNORECASE)
+        if min_match:
+            col_name = min_match.group(1)
+            values = []
+            for row in rows:
+                if col_name in row and row[col_name] is not None:
+                    try:
+                        values.append(float(row[col_name]))
+                    except (ValueError, TypeError):
+                        values.append(row[col_name])
+            if values:
+                try:
+                    # Try numeric comparison first
+                    min_val = min(values)
+                except TypeError:
+                    # Fall back to string comparison
+                    min_val = min(str(v) for v in values)
+            else:
+                min_val = None
+            alias_match = re.search(r'AS\s+(\w+)', columns, re.IGNORECASE)
+            if alias_match:
+                return [{alias_match.group(1): min_val}]
+            return [{f'MIN({col_name})': min_val}]
+        
+        # MAX(column)
+        max_match = re.match(r'MAX\(\s*(\w+)\s*\)', columns, re.IGNORECASE)
+        if max_match:
+            col_name = max_match.group(1)
+            values = []
+            for row in rows:
+                if col_name in row and row[col_name] is not None:
+                    try:
+                        values.append(float(row[col_name]))
+                    except (ValueError, TypeError):
+                        values.append(row[col_name])
+            if values:
+                try:
+                    # Try numeric comparison first
+                    max_val = max(values)
+                except TypeError:
+                    # Fall back to string comparison
+                    max_val = max(str(v) for v in values)
+            else:
+                max_val = None
+            alias_match = re.search(r'AS\s+(\w+)', columns, re.IGNORECASE)
+            if alias_match:
+                return [{alias_match.group(1): max_val}]
+            return [{f'MAX({col_name})': max_val}]
+        
+        # Multiple aggregates (simple implementation)
+        if ',' in columns:
+            results = {}
+            for agg in columns.split(','):
+                agg = agg.strip()
+                single_result = self._handle_aggregate(rows, agg, table_name)
+                if single_result and isinstance(single_result, list) and len(single_result) > 0:
+                    results.update(single_result[0])
+            return [results]
+        
+        return [{}]
+    
+    def _apply_order_by(self, rows, order_by):
+        """Simple ORDER BY implementation"""
+        if not rows or not order_by:
+            return rows
+        
+        # Parse ORDER BY clause
+        # Simple: just handle single column for now
+        order_col = order_by.strip()
+        descending = False
+        
+        if ' DESC' in order_by.upper():
+            order_col = order_col.replace(' DESC', '').replace(' desc', '').strip()
+            descending = True
+        elif ' ASC' in order_by.upper():
+            order_col = order_col.replace(' ASC', '').replace(' asc', '').strip()
+        
+        # Sort rows
+        try:
+            return sorted(rows, 
+                        key=lambda x: x.get(order_col, ''), 
+                        reverse=descending)
+        except:
+            return rows
     
     def _apply_where(self, rows, where_clause):
         """Simple WHERE clause evaluation"""
@@ -266,12 +446,20 @@ class StorageEngine:
                 key = left_row.get(left_col)
                 if key in other_index:
                     for right_row in other_index[key]:
-                        # Merge rows
-                        merged = left_row.copy()
-                        for k, v in right_row.items():
-                            if k not in merged:
-                                merged[f"{other_table}.{k}"] = v
-                        joined_rows.append(merged)
+                        # Create a new merged row with ALL columns prefixed
+                        merged_row = {}
+                        
+                        # Add all columns from left row with table prefix
+                        for col_name, value in left_row.items():
+                            if col_name != '_rowid':  # Skip internal rowid
+                                merged_row[f"{left_table}.{col_name}"] = value
+                        
+                        # Add all columns from right row with table prefix  
+                        for col_name, value in right_row.items():
+                            if col_name != '_rowid':  # Skip internal rowid
+                                merged_row[f"{right_table}.{col_name}"] = value
+                        
+                        joined_rows.append(merged_row)
             
             return joined_rows
         

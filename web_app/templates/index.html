@@ -58,21 +58,38 @@
                                 <th>Student</th>
                                 <th>Course</th>
                                 <th>Date</th>
+                                <th>Grade</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for enroll in recent_enrollments %}
                             <tr>
                                 <td>{{ enroll.first_name }} {{ enroll.last_name }}</td>
-                                <td>{{ enroll.course_name }}</td>
+                                <td>
+                                    {{ enroll.course_name }}
+                                    {% if enroll.course_code %}
+                                    <small class="text-muted">({{ enroll.course_code }})</small>
+                                    {% endif %}
+                                </td>
                                 <td>{{ enroll.enrollment_date }}</td>
+                                <td>
+                                    {% if enroll.grade %}
+                                    <span class="badge bg-{{ 'success' if enroll.grade in ['A', 'A-', 'B+'] else 'warning' }}">
+                                        {{ enroll.grade }}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
                 {% else %}
-                <p class="text-muted">No enrollments found.</p>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No recent enrollments to display.
+                </div>
                 {% endif %}
             </div>
         </div>

@@ -149,12 +149,15 @@ class SQLParser:
     
     @staticmethod
     def _parse_insert(sql):
+        # Replace newlines with spaces
+        sql = re.sub(r'\s+', ' ', sql.strip())
+        
         # INSERT INTO table_name (col1, col2) VALUES ('val1', 'val2')
-        pattern = r'INSERT INTO (\w+) \((.+?)\) VALUES \((.+?)\)'
+        pattern = r'INSERT INTO (\w+) \((.+?)\) VALUES \((.+)\)'
         match = re.match(pattern, sql, re.IGNORECASE)
         if not match:
             # Try without column names
-            pattern2 = r'INSERT INTO (\w+) VALUES \((.+?)\)'
+            pattern2 = r'INSERT INTO (\w+) VALUES \((.+)\)'
             match = re.match(pattern2, sql, re.IGNORECASE)
             if not match:
                 raise ValueError(f"Invalid INSERT syntax: {sql}")
@@ -190,23 +193,66 @@ class SQLParser:
     
     @staticmethod
     def _parse_select(sql):
-        # SELECT * FROM table [WHERE condition] [JOIN ...]
-        pattern = r'SELECT (.+?) FROM (\w+)(?: WHERE (.+?))?(?: (JOIN.+))?$'
-        match = re.match(pattern, sql, re.IGNORECASE)
-        if not match:
+        # Replace newlines and multiple spaces
+        sql = re.sub(r'\s+', ' ', sql.strip())
+        
+        # Parse SELECT statement
+        # Pattern: SELECT columns FROM table [JOIN ...] [WHERE ...] [ORDER BY ...] [LIMIT ...]
+        
+        # Extract SELECT clause
+        select_match = re.match(r'SELECT (.+?) FROM (.+)', sql, re.IGNORECASE)
+        if not select_match:
             raise ValueError(f"Invalid SELECT syntax: {sql}")
         
-        columns = match.group(1).strip()
-        table_name = match.group(2)
-        where = match.group(3) if match.group(3) else None
-        join = match.group(4) if match.group(4) else None
+        columns = select_match.group(1).strip()
+        from_part = select_match.group(2).strip()
+        
+        # Parse FROM clause which may include JOINs
+        # Find the main table (first word before JOIN, WHERE, ORDER BY, or LIMIT)
+        main_table_match = re.match(r'(\w+)(?:\s+.*)?', from_part)
+        if not main_table_match:
+            raise ValueError(f"Could not parse table name from: {from_part}")
+        
+        table_name = main_table_match.group(1)
+        
+        # Initialize components
+        join = None
+        where = None
+        order_by = None
+        limit = None
+        
+        # Extract JOIN clause (everything from JOIN to WHERE/ORDER BY/LIMIT/end)
+        join_pattern = r'(JOIN .+?)(?=(?: WHERE | ORDER BY | LIMIT |$))'
+        join_match = re.search(join_pattern, from_part, re.IGNORECASE | re.DOTALL)
+        if join_match:
+            join = join_match.group(1).strip()
+        
+        # Extract WHERE clause
+        where_pattern = r'WHERE (.+?)(?=(?: ORDER BY | LIMIT |$))'
+        where_match = re.search(where_pattern, from_part, re.IGNORECASE)
+        if where_match:
+            where = where_match.group(1).strip()
+        
+        # Extract ORDER BY clause
+        order_pattern = r'ORDER BY (.+?)(?=(?: LIMIT |$))'
+        order_match = re.search(order_pattern, from_part, re.IGNORECASE)
+        if order_match:
+            order_by = order_match.group(1).strip()
+        
+        # Extract LIMIT clause
+        limit_pattern = r'LIMIT (.+?)$'
+        limit_match = re.search(limit_pattern, from_part, re.IGNORECASE)
+        if limit_match:
+            limit = limit_match.group(1).strip()
         
         return {
             'type': 'SELECT',
             'columns': columns,
             'table_name': table_name,
             'where': where,
-            'join': join
+            'join': join,
+            'order_by': order_by,
+            'limit': limit
         }
     
     @staticmethod
