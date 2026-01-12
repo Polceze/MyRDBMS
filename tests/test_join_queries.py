@@ -51,7 +51,7 @@ for sql, description in test_queries:
             print(f"First row: {result[0]}")
     except Exception as e:
         print(f"Error: {e}")
-        # Try to parse it to see what's wrong
+        # Try to parse it to see if something's wrong
         try:
             from rdbms.parser import SQLParser
             parsed = SQLParser.parse(sql)
