@@ -43,10 +43,10 @@
                             <div class="card-body">
                                 <small class="text-muted">JOIN Example</small>
                                 <code class="d-block mt-1">
-                                    SELECT s.first_name, c.course_name, e.grade<br>
-                                    FROM enrollments e<br>
-                                    INNER JOIN students s ON e.student_id = s.student_id<br>
-                                    INNER JOIN courses c ON e.course_id = c.course_id;
+                                    SELECT students.first_name, courses.course_name, enrollments.grade<br>
+                                    FROM enrollments<br>
+                                    INNER JOIN students ON enrollments.student_id = students.student_id<br>
+                                    INNER JOIN courses ON enrollments.course_id = courses.course_id;
                                 </code>
                             </div>
                         </div>

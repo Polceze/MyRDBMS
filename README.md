@@ -463,33 +463,62 @@ python -m tests.simple_test # safe to leave out .py (file extension)
 
 ### Current Limitations
 
-- **No Foreign Key Constraints**  
-  Referential integrity is not enforced
+**Database Engine:**
+- Single-file Storage: All data stored in one file, no paging or sharding
+- No Foreign Key Constraints: Referential integrity is not enforced
+- Basic Indexing: Simple hash-based indexes instead of B-trees
+- No Concurrency Control: Single connection at a time
+- Basic Error Recovery: Limited crash recovery support
 
-- **Basic Indexing**  
-  Simple hash-based indexes instead of B-trees
+**SQL Syntax Support:**
+- Limited SQL Syntax: Subset of SQL only
+- No table or column aliases (e.g., `SELECT s.name FROM students s`)
+- No subqueries or views
+- No GROUP BY or HAVING clauses
+- No prepared statements or query caching
+- JOINs require explicit table prefixes in column references (e.g., `students.first_name` not just `first_name`)
+- WHERE clauses don't support parentheses or complex expressions
+- No support for LEFT/RIGHT/FULL OUTER JOIN, only INNER JOIN
 
-- **Limited SQL Syntax**  
-  Subset of SQL only, no subqueries or views
-
-- **Single-file Storage**  
-  All data stored in one file, no paging or sharding
-
-- **No Concurrency Control**  
-  Single connection at a time
-
-- **Basic Error Recovery**  
-  Limited crash recovery support
-
----
+**Data Types & Features:**
+- Limited data type support (no BLOB, DECIMAL, TIMESTAMP, etc.)
+- No transactions
+- No stored procedures
 
 ### Known Issues
 
-- Complex queries with multiple joins can be slow  
-- No prepared statements or query caching  
-- Limited data type support (no `BLOB`, `DECIMAL`, etc.)
+**Performance:**
+- All data is stored in memory and serialized to disk
+- No query optimization
+- No connection pooling in web interface
 
----
+**Web Interface:**
+- Database is recreated on every app restart in development mode
+- No user authentication
+- SQL injection vulnerabilities exist in raw query interface (educational purpose only!)
+
+**SQL Feature Gaps:**
+- Table aliases not supported - must use full table names
+- Column aliases (AS keyword) not fully supported
+- Complex JOIN conditions (only simple equality supported)
+- Limited error messages for malformed SQL
+
+### Getting Around Limitations
+
+For JOIN queries, always use full table names:
+```sql
+-- ✅ DO: Use table prefixes
+SELECT students.first_name, courses.course_name, enrollments.grade
+FROM enrollments
+INNER JOIN students ON enrollments.student_id = students.student_id
+INNER JOIN courses ON enrollments.course_id = courses.course_id;
+
+-- ❌ DON'T: Use table aliases  
+SELECT s.first_name, c.course_name, e.grade
+FROM enrollments e
+INNER JOIN students s ON e.student_id = s.student_id
+INNER JOIN courses c ON e.course_id = c.course_id;
+```
 
 ## Future Improvements
 
