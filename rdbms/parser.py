@@ -27,6 +27,10 @@ class SQLParser:
     
     @staticmethod
     def _parse_create_table(sql):
+        # Replace newlines and multiple spaces
+        sql = re.sub(r'\s+', ' ', sql.strip())
+        sql = sql.rstrip(';')
+
         # CREATE TABLE table_name (col1 TYPE, col2 TYPE, PRIMARY KEY(col))
         pattern = r'CREATE TABLE (\w+) \((.+)\)'
         match = re.match(pattern, sql, re.IGNORECASE | re.DOTALL)
@@ -35,9 +39,6 @@ class SQLParser:
         
         table_name = match.group(1)
         columns_str = match.group(2).strip()
-        
-        print(f"[DEBUG] Parsing CREATE TABLE: {table_name}")
-        print(f"[DEBUG] Columns string: {columns_str}")
         
         columns = []
         primary_key = None
@@ -75,9 +76,6 @@ class SQLParser:
                 constraint_tokens.append(token)
             else:
                 column_tokens.append(token)
-        
-        print(f"[DEBUG] Column tokens: {column_tokens}")
-        print(f"[DEBUG] Constraint tokens: {constraint_tokens}")
         
         # Process column definitions
         for token in column_tokens:
@@ -135,10 +133,6 @@ class SQLParser:
                 if unique_match:
                     unique_keys.append(unique_match.group(1))
         
-        print(f"[DEBUG] Parsed columns: {columns}")
-        print(f"[DEBUG] Primary key: {primary_key}")
-        print(f"[DEBUG] Unique keys: {unique_keys}")
-        
         return {
             'type': 'CREATE_TABLE',
             'table_name': table_name,
@@ -151,6 +145,7 @@ class SQLParser:
     def _parse_insert(sql):
         # Replace newlines with spaces
         sql = re.sub(r'\s+', ' ', sql.strip())
+        sql = sql.rstrip(';')
         
         # INSERT INTO table_name (col1, col2) VALUES ('val1', 'val2')
         pattern = r'INSERT INTO (\w+) \((.+?)\) VALUES \((.+)\)'
@@ -195,7 +190,8 @@ class SQLParser:
     def _parse_select(sql):
         # Replace newlines and multiple spaces
         sql = re.sub(r'\s+', ' ', sql.strip())
-        
+        sql = sql.rstrip(';')
+
         # Parse SELECT statement
         # Pattern: SELECT columns FROM table [JOIN ...] [WHERE ...] [ORDER BY ...] [LIMIT ...]
         
@@ -257,6 +253,10 @@ class SQLParser:
     
     @staticmethod
     def _parse_update(sql):
+        # Replace newlines and multiple spaces
+        sql = re.sub(r'\s+', ' ', sql.strip())
+        sql = sql.rstrip(';')
+
         # UPDATE table SET col1='val1', col2='val2' WHERE condition
         pattern = r'UPDATE (\w+) SET (.+?)(?: WHERE (.+))?$'
         match = re.match(pattern, sql, re.IGNORECASE)
@@ -284,6 +284,10 @@ class SQLParser:
     
     @staticmethod
     def _parse_delete(sql):
+        # Replace newlines and multiple spaces
+        sql = re.sub(r'\s+', ' ', sql.strip())
+        sql = sql.rstrip(';')
+
         # DELETE FROM table WHERE condition
         pattern = r'DELETE FROM (\w+)(?: WHERE (.+))?$'
         match = re.match(pattern, sql, re.IGNORECASE)
@@ -301,6 +305,10 @@ class SQLParser:
     
     @staticmethod
     def _parse_create_index(sql):
+        # Replace newlines and multiple spaces
+        sql = re.sub(r'\s+', ' ', sql.strip())
+        sql = sql.rstrip(';')
+        
         # CREATE INDEX index_name ON table_name(column_name)
         pattern = r'CREATE INDEX (\w+) ON (\w+)\((\w+)\)'
         match = re.match(pattern, sql, re.IGNORECASE)

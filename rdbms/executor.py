@@ -60,7 +60,9 @@ class QueryExecutor:
                 parsed_query['table_name'],
                 parsed_query['columns'],
                 parsed_query.get('where'),
-                parsed_query.get('join')
+                parsed_query.get('join'),
+                parsed_query.get('order_by'),
+                parsed_query.get('limit')
             )
         
         elif query_type == 'UPDATE':

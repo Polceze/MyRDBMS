@@ -88,7 +88,7 @@ def init_database():
         (2, 'Jane', 'Smith', 'jane.smith@example.com', '2001-08-22', 2022),
         (3, 'Paul', 'Ochieng', 'paul.ochieng@example.com', '1999-12-10', 2021),
         (4, 'Alice', 'Wanjiku', 'alice.wanjiku@example.com', '2000-03-30', 2022),
-        (5, 'William', 'Ruto', 'william.ruto@example.com', '2002-01-18', 2023)
+        (5, 'Will', 'Kilonzo', 'will.kilonzo@example.com', '2002-01-18', 2023)
     ]
     
     for student in students:

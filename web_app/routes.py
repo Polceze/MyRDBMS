@@ -17,14 +17,11 @@ def index():
         enrollments_result = db.execute_raw('SELECT COUNT(*) as enrollment_count FROM enrollments')
         
         # Extract counts
-        student_count = students_result[0]['student_count'] if students_result and len(students_result) > 0 else 0
-        course_count = courses_result[0]['course_count'] if courses_result and len(courses_result) > 0 else 0
-        enrollment_count = enrollments_result[0]['enrollment_count'] if enrollments_result and len(enrollments_result) > 0 else 0
-        
-        print(f"Dashboard counts: students={student_count}, courses={course_count}, enrollments={enrollment_count}")
+        student_count = students_result[0]['student_count'] if students_result else 0
+        course_count = courses_result[0]['course_count'] if courses_result else 0
+        enrollment_count = enrollments_result[0]['enrollment_count'] if enrollments_result else 0
         
     except Exception as e:
-        print(f"Error getting dashboard counts: {e}")
         student_count = course_count = enrollment_count = 0
     
     # Get recent enrollments
@@ -40,14 +37,8 @@ def index():
             ORDER BY enrollment_date DESC
             LIMIT 5
         ''')
-        
-        print(f"Dashboard: Found {len(recent_enrollments)} recent enrollments")
-        if recent_enrollments and len(recent_enrollments) > 0:
-            print(f"First enrollment keys: {list(recent_enrollments[0].keys())}")
-            print(f"First enrollment: {recent_enrollments[0]}")
-        
-    except Exception as e:
-        print(f"Error getting recent enrollments: {e}")
+    except Exception:
+        recent_enrollments = []
     
     return render_template('index.html',
                          student_count=student_count,
@@ -185,11 +176,7 @@ def list_enrollments():
             INNER JOIN courses ON enrollments.course_id = courses.course_id
             ORDER BY enrollment_date DESC
         ''')
-        print(f"Enrollments page: Found {len(enrollments)} enrollments")
-        if enrollments and len(enrollments) > 0:
-            print(f"First enrollment keys: {list(enrollments[0].keys())}")
-    except Exception as e:
-        print(f"Error loading enrollments: {e}")
+    except Exception:
         enrollments = []
     
     return render_template('enrollments/list.html', enrollments=enrollments)

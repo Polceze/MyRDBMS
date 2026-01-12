@@ -172,11 +172,7 @@ class StorageEngine:
         
         # Apply JOIN if provided
         if join:
-            print(f"[DEBUG] Before JOIN: {len(rows)} rows")
             rows = self._apply_join(rows, join)
-            print(f"[DEBUG] After JOIN: {len(rows)} rows")
-            if rows:
-                print(f"[DEBUG] First joined row keys: {list(rows[0].keys())}")
         
         # Handle aggregate functions
         columns_upper = columns.upper()
@@ -187,19 +183,15 @@ class StorageEngine:
         
         # Select specific columns
         if columns != '*':
-            print(f"[DEBUG] Selecting columns: {columns}")
             selected_rows = []
-            for i, row in enumerate(rows):
+            for row in rows:
                 selected_row = {}
-                print(f"[DEBUG] Row {i} keys: {list(row.keys())}")
                 for col_spec in columns.split(','):
                     col_spec = col_spec.strip()
-                    print(f"[DEBUG] Looking for column: '{col_spec}' in row")
                     
                     # Try exact match first
                     if col_spec in row:
                         selected_row[col_spec] = row[col_spec]
-                        print(f"[DEBUG]   ✓ Exact match")
                         continue
                     
                     # If no exact match, try to find a matching key
@@ -221,12 +213,8 @@ class StorageEngine:
                     
                     if found_key:
                         selected_row[col_spec] = row[found_key]
-                        print(f"[DEBUG]   ✓ Found via key '{found_key}'")
-                    else:
-                        print(f"[DEBUG]   ✗ Not found in row")
                 
                 selected_rows.append(selected_row)
-                print(f"[DEBUG] Selected row {i}: {selected_row}")
             rows = selected_rows
         
         # Apply ORDER BY if specified
@@ -240,10 +228,6 @@ class StorageEngine:
                 rows = rows[:limit_int]
             except:
                 pass
-        
-        print(f"[DEBUG] Final result: {len(rows)} rows")
-        if rows:
-            print(f"[DEBUG] First result row: {rows[0]}")
         
         return rows
     
@@ -446,77 +430,54 @@ class StorageEngine:
     
     def _apply_join(self, rows, join_clause):
         """Apply JOIN operations - handles multiple joins"""
-        print(f"[DEBUG _apply_join] Start: join_clause='{join_clause}'")
-        print(f"[DEBUG _apply_join] Number of input rows: {len(rows)}")
-        
         if not join_clause:
-            print(f"[DEBUG _apply_join] No join clause, returning original rows")
             return rows
         
         # Process joins recursively
         result = self._apply_join_recursive(rows, join_clause)
         
-        print(f"[DEBUG _apply_join] End: number of output rows: {len(result)}")
-        if result:
-            print(f"[DEBUG _apply_join] First output row keys: {list(result[0].keys())}")
-        
         return result
 
     def _apply_join_recursive(self, rows, join_clause):
         """Recursively apply multiple joins"""
-        print(f"[DEBUG _apply_join_recursive] Start: join_clause='{join_clause}'")
-        
         # Strip whitespace first
         join_clause = join_clause.strip()
         if not join_clause or not rows:
-            print(f"[DEBUG _apply_join_recursive] Base case reached")
             return rows
         
         join_clause_upper = join_clause.upper()
-        print(f"[DEBUG _apply_join_recursive] join_clause_upper='{join_clause_upper}'")
         
         # Check for INNER JOIN at the beginning
         if join_clause_upper.startswith('INNER JOIN '):
-            print(f"[DEBUG _apply_join_recursive] Found 'INNER JOIN' at beginning")
             join_idx = join_clause_upper.find('INNER JOIN ')
             before_join = join_clause[:join_idx].strip()
             after_join = join_clause[join_idx + 11:].strip()
-            print(f"[DEBUG _apply_join_recursive] before_join='{before_join}', after_join='{after_join}'")
             
             # The part before JOIN should be empty (except for previous ON clause)
             if before_join and not before_join.upper().startswith('ON '):
-                print(f"[DEBUG _apply_join_recursive] Returning rows - before_join not empty and not ON")
                 return rows
                 
         elif 'JOIN ' in join_clause_upper:
-            print(f"[DEBUG _apply_join_recursive] Found 'JOIN' (without INNER)")
             join_idx = join_clause_upper.find('JOIN ')
             before_join = join_clause[:join_idx].strip()
             after_join = join_clause[join_idx + 5:].strip()
-            print(f"[DEBUG _apply_join_recursive] before_join='{before_join}', after_join='{after_join}'")
         else:
-            print(f"[DEBUG _apply_join_recursive] No JOIN found, returning rows")
             return rows
         
         # Parse the JOIN: table_name ON condition
         parts = after_join.split(None, 1)
-        print(f"[DEBUG _apply_join_recursive] parts={parts}")
         if len(parts) < 2:
-            print(f"[DEBUG _apply_join_recursive] Returning rows - less than 2 parts")
             return rows
         
         other_table = parts[0]
         rest = parts[1]
-        print(f"[DEBUG _apply_join_recursive] other_table='{other_table}', rest='{rest}'")
         
         # Find the ON clause
         if not rest.upper().startswith('ON '):
-            print(f"[DEBUG _apply_join_recursive] Returning rows - rest doesn't start with ON")
             return rows
         
         # Extract ON condition (up to next JOIN or end)
         on_text = rest[3:].strip()  # Remove "ON "
-        print(f"[DEBUG _apply_join_recursive] on_text='{on_text}'")
         
         # Find where this ON clause ends (next JOIN or end)
         upper_on = on_text.upper()
@@ -546,13 +507,7 @@ class StorageEngine:
 
     def _apply_single_join(self, rows, other_table, on_clause):
         """Apply a single join operation"""
-        print(f"[DEBUG _apply_single_join] Start: other_table='{other_table}', on_clause='{on_clause}'")
-        print(f"[DEBUG _apply_single_join] Input rows: {len(rows)}")
-        if rows:
-            print(f"[DEBUG _apply_single_join] First input row keys: {list(rows[0].keys())}")
-
         if not rows or other_table not in self.data:
-            print(f"[DEBUG _apply_single_join] No rows or table not found, returning")
             return rows
         
         # Parse ON clause: "table.col = other_table.col"
@@ -561,19 +516,15 @@ class StorageEngine:
             left = left.strip()
             right = right.strip()
             
-            print(f"[DEBUG _apply_single_join] left='{left}', right='{right}'")
-            
             # Parse table.column references
             if '.' in left and '.' in right:
                 left_table, left_col = left.split('.')
                 right_table, right_col = right.split('.')
-                print(f"[DEBUG _apply_single_join] left_table='{left_table}', left_col='{left_col}', right_table='{right_table}', right_col='{right_col}'")
             else:
                 return rows
             
             # Build index of other table
             other_rows = self.data[other_table]
-            print(f"[DEBUG _apply_single_join] other_table '{other_table}' has {len(other_rows)} rows")
             other_index = {}
             for row in other_rows:
                 key = row.get(right_col)
@@ -581,23 +532,17 @@ class StorageEngine:
                     other_index[key] = []
                 other_index[key].append(row)
             
-            print(f"[DEBUG _apply_single_join] other_index keys: {list(other_index.keys())}")
-            
             # Perform join
             joined_rows = []
-            match_count = 0
-            no_key_count = 0
-            for i, left_row in enumerate(rows):
+            for left_row in rows:
                 # Try to get key
                 key = left_row.get(left)  # Try with full prefix first
                 if key is None:
                     key = left_row.get(left_col)  # Try without prefix
                     if key is None:
-                        no_key_count += 1
                         continue
                 
                 if key in other_index:
-                    match_count += 1
                     for right_row in other_index[key]:
                         merged_row = {}
                         
@@ -606,19 +551,13 @@ class StorageEngine:
                             if col_name == '_rowid':
                                 continue
                             
-                            # Debug print
-                            print(f"[DEBUG] Processing left column: {col_name}")
-                            
                             # Check if column already has a table prefix
                             if '.' in col_name:
                                 # Column already has table prefix (e.g., students.first_name from previous join)
-                                print(f"[DEBUG]   Column has prefix already, keeping: {col_name}")
                                 merged_row[col_name] = value
                             else:
                                 # Column doesn't have prefix - add left_table prefix
-                                new_name = f"{left_table}.{col_name}"
-                                print(f"[DEBUG]   Adding prefix {left_table}. to {col_name} -> {new_name}")
-                                merged_row[new_name] = value
+                                merged_row[f"{left_table}.{col_name}"] = value
                         
                         # Add columns from right row with table prefix
                         for col_name, value in right_row.items():
@@ -626,11 +565,6 @@ class StorageEngine:
                                 merged_row[f"{other_table}.{col_name}"] = value
                         
                         joined_rows.append(merged_row)
-            
-            print(f"[DEBUG _apply_single_join] match_count={match_count}, no_key_count={no_key_count}")
-            print(f"[DEBUG _apply_single_join] End: output rows: {len(joined_rows)}")
-            if joined_rows:
-                print(f"[DEBUG _apply_single_join] First output row keys: {list(joined_rows[0].keys())}")
             
             return joined_rows
         
