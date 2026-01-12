@@ -31,13 +31,13 @@ def index():
     recent_enrollments = []
     try:
         recent_enrollments = db.execute_raw('''
-            SELECT students.first_name, students.last_name, 
-                   courses.course_name, enrollments.enrollment_date,
-                   enrollments.grade, courses.course_code
+            SELECT first_name, last_name, 
+                course_name, enrollment_date,
+                grade, course_code
             FROM enrollments
             INNER JOIN students ON enrollments.student_id = students.student_id
             INNER JOIN courses ON enrollments.course_id = courses.course_id
-            ORDER BY enrollments.enrollment_date DESC
+            ORDER BY enrollment_date DESC
             LIMIT 5
         ''')
         
