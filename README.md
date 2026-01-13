@@ -5,25 +5,8 @@
 ![Web Framework](https://img.shields.io/badge/Web%20Framework-Flask-red) 
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-## Table of Contents
+> 
 
-- [Overview](#overview)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Usage Examples](#usage-examples)
-- [Web Interface](#web-interface)
-- [API Endpoints](#api-endpoints)
-- [API Reference](#api-reference)
-- [Project Structure](#project-structure)
-- [Testing](#testing)
-- [Limitations](#limitations)
-- [Future Improvements](#future-improvements)
-- [Contributing](#contributing)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
-- [Contact](#contact)
 
 ## Overview
 
@@ -39,7 +22,10 @@
 
 The project was developed as a hands-on demonstration of database system internals, design tradeoffs, and practical software engineering skills.
 
----
+### <ins>[Live Demo using a Web App](https://myrdbms.pythonanywhere.com/)</ins>
+
+
+
 
 ## Features
 
