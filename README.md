@@ -5,9 +5,6 @@
 ![Web Framework](https://img.shields.io/badge/Web%20Framework-Flask-red) 
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-> 
-
-
 ## Overview
 
 **MyRDBMS** is a fully functional relational database management system implemented from scratch in Python. Unlike typical database projects that rely on existing engines such as SQLite or MySQL connectors, this project builds the core database components directly, including:
