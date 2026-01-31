@@ -13,7 +13,7 @@
 - SQL parser for SQL-like queries  
 - Query executor with basic optimization  
 - Type system with strict validation  
-- Indexing system for faster queries  
+- Hash-based indexes indexing system for faster queries  
 - Interactive REPL (Read-Eval-Print Loop)  
 - Web interface with full CRUD operations  
 
@@ -38,13 +38,10 @@ The project was developed as a hands-on demonstration of database system interna
   `PRIMARY KEY`, `UNIQUE`, `NOT NULL`
 
 - **Indexing**  
-  Basic B-tree-like indexing for faster lookups
+  Basic hash-based indexing for faster lookups
 
 - **Joins**  
   `INNER JOIN` operations across multiple tables
-
-- **Transactions**  
-  Basic transaction support with `BEGIN`, `COMMIT`, and `ROLLBACK`
 
 - **File Persistence**  
   Database state saved to disk using pickle serialization
@@ -261,26 +258,6 @@ INNER JOIN department_employees ON employees.emp_id = department_employees.emp_i
 INNER JOIN departments ON department_employees.dept_id = departments.dept_id;
 ```
 
-### Transaction Support
-
-```sql
--- Begin a transaction
-BEGIN;
-
--- Execute multiple operations
-INSERT INTO accounts (id, balance) VALUES (1, 1000.00);
-UPDATE accounts SET balance = balance - 100 WHERE id = 1;
-UPDATE accounts SET balance = balance + 100 WHERE id = 2;
-
--- Commit the transaction
-COMMIT;
-
--- Or rollback on error
-BEGIN;
-INSERT INTO accounts (id, balance) VALUES (3, 500.00);
--- Something went wrong
-ROLLBACK;
-```
 
 ## Web Interface
 
