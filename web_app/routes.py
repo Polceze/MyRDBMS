@@ -212,7 +212,7 @@ def add_enrollment():
     student_id = request.form.get('student_id')
     course_id = request.form.get('course_id')
     enrollment_date = request.form.get('enrollment_date')
-    grade = request.form.get('grade', '').strip() or 'NULL'
+    grade = request.form.get('grade', '').strip()
 
     if not student_id or not course_id or not enrollment_date:
         flash('Student, course, and enrollment date are required.', 'danger')
@@ -233,7 +233,7 @@ def add_enrollment():
             flash('This student is already enrolled in that course.', 'warning')
             return redirect(url_for('main.list_enrollments'))
 
-        grade_val = f"'{grade}'" if grade != 'NULL' else 'NULL'
+        grade_val = 'NULL' if not grade else f"'{grade}'"
         db.execute_raw(f'''
             INSERT INTO enrollments
             VALUES ({next_id}, {student_id}, {course_id}, '{enrollment_date}', {grade_val})
