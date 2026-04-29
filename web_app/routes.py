@@ -16,10 +16,16 @@ def index():
         courses_result = db.execute_raw('SELECT COUNT(*) as course_count FROM courses')
         enrollments_result = db.execute_raw('SELECT COUNT(*) as enrollment_count FROM enrollments')
         
-        # Extract counts
-        student_count = students_result[0]['student_count'] if students_result else 0
-        course_count = courses_result[0]['course_count'] if courses_result else 0
-        enrollment_count = enrollments_result[0]['enrollment_count'] if enrollments_result else 0
+        # Extract counts — handle both aliased and unaliased keys
+        def extract_count(result, alias):
+            if not result:
+                return 0
+            row = result[0]
+            return row.get(alias) or row.get('COUNT(*)') or 0
+
+        student_count = extract_count(students_result, 'student_count')
+        course_count = extract_count(courses_result, 'course_count')
+        enrollment_count = extract_count(enrollments_result, 'enrollment_count')
         
     except Exception as e:
         student_count = course_count = enrollment_count = 0
@@ -165,7 +171,7 @@ def list_courses():
 def list_enrollments():
     """List all enrollments with JOIN"""
     db = get_db()
-    
+
     try:
         enrollments = db.execute_raw('''
             SELECT enrollment_id, enrollment_date, grade,
@@ -178,8 +184,130 @@ def list_enrollments():
         ''')
     except Exception:
         enrollments = []
-    
-    return render_template('enrollments/list.html', enrollments=enrollments)
+
+    # Load students and courses for the enroll form
+    try:
+        students = db.execute_raw('SELECT student_id, first_name, last_name FROM students ORDER BY last_name, first_name')
+    except Exception:
+        students = []
+
+    try:
+        courses = db.execute_raw('SELECT course_id, course_code, course_name FROM courses ORDER BY course_code')
+    except Exception:
+        courses = []
+
+    return render_template('enrollments/list.html',
+                           enrollments=enrollments,
+                           students=students,
+                           courses=courses)
+
+
+@bp.route('/enrollments/add', methods=['POST'])
+def add_enrollment():
+    """Enroll a student in a course"""
+    db = get_db()
+
+    student_id = request.form.get('student_id')
+    course_id = request.form.get('course_id')
+    enrollment_date = request.form.get('enrollment_date')
+    grade = request.form.get('grade', '').strip() or 'NULL'
+
+    if not student_id or not course_id or not enrollment_date:
+        flash('Student, course, and enrollment date are required.', 'danger')
+        return redirect(url_for('main.list_enrollments'))
+
+    try:
+        # Get next enrollment ID safely (MAX + 1 to avoid collisions after deletes)
+        id_result = db.execute_raw('SELECT MAX(enrollment_id) FROM enrollments')
+        max_id = id_result[0].get('MAX(enrollment_id)') or 0
+        next_id = max_id + 1
+
+        # Check for duplicate enrollment
+        existing = db.execute_raw(f'''
+            SELECT enrollment_id FROM enrollments
+            WHERE student_id={student_id} AND course_id={course_id}
+        ''')
+        if existing:
+            flash('This student is already enrolled in that course.', 'warning')
+            return redirect(url_for('main.list_enrollments'))
+
+        grade_val = f"'{grade}'" if grade != 'NULL' else 'NULL'
+        db.execute_raw(f'''
+            INSERT INTO enrollments
+            VALUES ({next_id}, {student_id}, {course_id}, '{enrollment_date}', {grade_val})
+        ''')
+        flash('Enrollment added successfully!', 'success')
+    except Exception as e:
+        flash(f'Error adding enrollment: {str(e)}', 'danger')
+
+    return redirect(url_for('main.list_enrollments'))
+
+
+@bp.route('/enrollments/<int:enrollment_id>/delete')
+def delete_enrollment(enrollment_id):
+    """Delete an enrollment"""
+    db = get_db()
+
+    try:
+        db.execute_raw(f'DELETE FROM enrollments WHERE enrollment_id={enrollment_id}')
+        flash('Enrollment removed successfully.', 'success')
+    except Exception as e:
+        flash(f'Error removing enrollment: {str(e)}', 'danger')
+
+    return redirect(url_for('main.list_enrollments'))
+
+@bp.route('/enrollments/<int:enrollment_id>/grade', methods=['POST'])
+def update_grade(enrollment_id):
+    """Update the grade for an enrollment"""
+    db = get_db()
+    grade = request.form.get('grade', '').strip()
+
+    try:
+        grade_val = f"'{grade}'" if grade else 'NULL'
+        db.execute_raw(f"UPDATE enrollments SET grade={grade_val} WHERE enrollment_id={enrollment_id}")
+        flash('Grade updated.', 'success')
+    except Exception as e:
+        flash(f'Error updating grade: {str(e)}', 'danger')
+
+    return redirect(url_for('main.list_enrollments'))
+
+
+@bp.route('/courses/add', methods=['GET', 'POST'])
+def add_course():
+    """Add a new course"""
+    if request.method == 'POST':
+        course_id = request.form['course_id']
+        course_code = request.form['course_code']
+        course_name = request.form['course_name']
+        instructor = request.form.get('instructor', '')
+        credits = request.form.get('credits', 3)
+
+        db = get_db()
+        try:
+            db.execute_raw(f'''
+                INSERT INTO courses
+                VALUES ({course_id}, '{course_code}', '{course_name}',
+                        '{instructor}', {credits})
+            ''')
+            flash('Course added successfully!', 'success')
+            return redirect(url_for('main.list_courses'))
+        except Exception as e:
+            flash(f'Error adding course: {str(e)}', 'danger')
+
+    return render_template('courses/add.html')
+
+
+@bp.route('/courses/<int:course_id>/delete')
+def delete_course(course_id):
+    """Delete a course"""
+    db = get_db()
+    try:
+        db.execute_raw(f'DELETE FROM courses WHERE course_id={course_id}')
+        flash('Course deleted successfully!', 'success')
+    except Exception as e:
+        flash(f'Error deleting course: {str(e)}', 'danger')
+    return redirect(url_for('main.list_courses'))
+
 
 @bp.route('/query', methods=['GET', 'POST'])
 def sql_query():
