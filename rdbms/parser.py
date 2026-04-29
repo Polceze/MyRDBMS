@@ -272,8 +272,23 @@ class SQLParser:
         for pair in set_clause.split(','):
             col, value = pair.split('=', 1)
             col = col.strip()
-            value = value.strip().strip("'")
-            set_values[col] = value
+            value = value.strip()
+            
+            # Handle NULL in UPDATE
+            if value.upper() == 'NULL':
+                set_values[col] = None
+            # Handle quoted strings
+            elif (value.startswith("'") and value.endswith("'")) or (value.startswith('"') and value.endswith('"')):
+                set_values[col] = value[1:-1]
+            else:
+                # Try to convert to number
+                try:
+                    if '.' in value:
+                        set_values[col] = float(value)
+                    else:
+                        set_values[col] = int(value)
+                except ValueError:
+                    set_values[col] = value
         
         return {
             'type': 'UPDATE',
@@ -352,10 +367,25 @@ class SQLParser:
         cleaned = []
         for val in values:
             val = val.strip()
-            if val.startswith("'") and val.endswith("'"):
-                val = val[1:-1]
+            
+            # Check for NULL keyword (case-insensitive)
+            if val.upper() == 'NULL':
+                cleaned.append(None)  # Convert NULL to Python None
+            # Handle quoted strings
+            elif val.startswith("'") and val.endswith("'"):
+                cleaned.append(val[1:-1])
             elif val.startswith('"') and val.endswith('"'):
-                val = val[1:-1]
-            cleaned.append(val)
+                cleaned.append(val[1:-1])
+            # Handle numbers
+            else:
+                # Try to convert to int or float if it looks like a number
+                try:
+                    if '.' in val:
+                        cleaned.append(float(val))
+                    else:
+                        cleaned.append(int(val))
+                except ValueError:
+                    # Keep as string if not a number
+                    cleaned.append(val)
         
         return cleaned
