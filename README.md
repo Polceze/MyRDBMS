@@ -280,12 +280,16 @@ The dashboard provides an overview of your database, including key statistics an
 #### Courses Catalog
 - Browse available courses  
 - Search by course name, code, or instructor  
-- View detailed course information  
+- Add new courses via a dedicated form  
+- Delete courses  
 
 #### Enrollments
-- View student course enrollments  
-- Demonstrates `INNER JOIN` operations  
-- Shows relationships between tables  
+- View all student–course enrollments  
+- Enroll a student in a course via a modal form (with student/course dropdowns, date picker, and optional grade)  
+- Update a student's grade inline directly from the enrollments table  
+- Remove individual enrollments  
+- Demonstrates `INNER JOIN` operations across three tables  
+- Automatically removes a student's enrollments when the student is deleted  
 
 #### SQL Query Interface
 - Execute raw SQL queries  
@@ -385,6 +389,7 @@ MyRDBMS/
 ├─ web_app/
 │  ├─ templates/
 │  │  ├─ courses/
+│  │  │  ├─ add.html
 │  │  │  └─ list.html
 │  │  ├─ enrollments/
 │  │  │  └─ list.html
@@ -456,6 +461,7 @@ python -m tests.simple_test # safe to leave out .py (file extension)
 - Database is recreated on every app restart in development mode
 - No user authentication
 - SQL injection vulnerabilities exist in raw query interface (educational purpose only!)
+- No foreign key cascade support in the storage engine — referential integrity is handled at the application layer (e.g., deleting a student also deletes their enrollments)
 
 **SQL Feature Gaps:**
 - Table aliases not supported - must use full table names
@@ -590,7 +596,7 @@ See the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🌟 Show Your Support
+## Show Your Support
 
 If you find this project useful, please consider giving it a star ⭐
 
