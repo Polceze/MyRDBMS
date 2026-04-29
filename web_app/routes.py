@@ -136,15 +136,17 @@ def edit_student(student_id):
 
 @bp.route('/students/<int:student_id>/delete')
 def delete_student(student_id):
-    """Delete a student"""
+    """Delete a student and their associated enrollments"""
     db = get_db()
-    
+
     try:
+        # Delete associated enrollments first (no FK cascade in custom RDBMS)
+        db.execute_raw(f'DELETE FROM enrollments WHERE student_id={student_id}')
         db.execute_raw(f'DELETE FROM students WHERE student_id={student_id}')
-        flash('Student deleted successfully!', 'success')
+        flash('Student and their enrollments deleted successfully!', 'success')
     except Exception as e:
         flash(f'Error deleting student: {str(e)}', 'danger')
-    
+
     return redirect(url_for('main.list_students'))
 
 @bp.route('/courses')
@@ -219,7 +221,7 @@ def add_enrollment():
     try:
         # Get next enrollment ID safely (MAX + 1 to avoid collisions after deletes)
         id_result = db.execute_raw('SELECT MAX(enrollment_id) FROM enrollments')
-        max_id = id_result[0].get('MAX(enrollment_id)') or 0
+        max_id = int(id_result[0].get('MAX(enrollment_id)') or 0)
         next_id = max_id + 1
 
         # Check for duplicate enrollment
