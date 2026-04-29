@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+
+{% block title %}Add Course - MyRDBMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Add New Course</h1>
+    <a href="{{ url_for('main.list_courses') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Courses
+    </a>
+</div>
+
+<div class="card" style="max-width: 600px;">
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Course ID <span class="text-danger">*</span></label>
+                <input type="number" name="course_id" class="form-control" required placeholder="e.g. 106">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Course Code <span class="text-danger">*</span></label>
+                <input type="text" name="course_code" class="form-control" required placeholder="e.g. CS301">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Course Name <span class="text-danger">*</span></label>
+                <input type="text" name="course_name" class="form-control" required placeholder="e.g. Algorithms and Data Structures">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Instructor</label>
+                <input type="text" name="instructor" class="form-control" placeholder="e.g. Dr. Kamau">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Credits</label>
+                <input type="number" name="credits" class="form-control" value="3" min="1" max="6">
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Add Course
+                </button>
+                <a href="{{ url_for('main.list_courses') }}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
